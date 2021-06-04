@@ -27,44 +27,45 @@ CREATE TABLE IF NOT EXISTS users (
     user_id int
     , first_name varchar
     , last_name varchar
-    , gender boolean
-    , level int
+    , gender varchar
+    , level varchar
 )
 """)
 
 song_table_create = ("""
 CREATE TABLE IF NOT EXISTS songs (
-    song_id int
+    song_id varchar
     , title varchar
-    , artist_id int
+    , artist_id varchar
     , year int
-    , duration int
-)
-""")
-
-artist_table_create = ("""
-CREATE TABLE IF NOT EXISTS artists (
-    songplay_id int
-    , start_time varchar
-    , user_id int
-    , level int
-    , song_id int
-    , artist_id int
-    , session_id int
-    , location varchar
-    , user_agent varchar
+    , duration float
 )
 """)
 
 time_table_create = ("""
 CREATE TABLE IF NOT EXISTS time (
-    artist_id int
-    , name varchar
-    , location varchar
-    , latitude varchar
-    , longitude varchar
+    start_time bigint
+    , hour int
+    , day int
+    , week int
+    , month int
+    , year int
+    , weekday int
 )
 """)
+
+artist_table_create = ("""
+CREATE TABLE IF NOT EXISTS artists (
+    artist_id varchar
+    , name varchar
+    , location varchar
+    , latitude float
+    , longitude float
+)
+""")
+
+
+
 
 # INSERT RECORDS
 
@@ -80,21 +81,56 @@ INSERT INTO songplays (
     , location
     , user_agent
 )
-VALUES ({}, {}, {})
+VALUES (%s,%s,%s,%s)
 """)
 
 
 user_table_insert = ("""
+INSERT INTO users (
+    user_id
+    , first_name
+    , last_name
+    , gender
+    , level
+)
+VALUES (%s,%s,%s,%s,%s)
 """)
 
+
 song_table_insert = ("""
+INSERT INTO songs (
+    song_id
+    , title
+    , artist_id
+    , year
+    , duration
+)
+VALUES (%s,%s,%s,%s,%s)
 """)
 
 artist_table_insert = ("""
+INSERT INTO artists (
+    artist_id
+    , name
+    , location
+    , latitude
+    , longitude
+)
+VALUES (%s,%s,%s,%s,%s)
 """)
 
 
 time_table_insert = ("""
+INSERT INTO time (
+    start_time
+    , hour
+    , day
+    , week
+    , month
+    , year
+    , weekday
+)
+VALUES (%s,%s,%s,%s,%s,%s,%s)
 """)
 
 # FIND SONGS
