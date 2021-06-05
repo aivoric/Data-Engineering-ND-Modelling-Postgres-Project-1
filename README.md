@@ -51,7 +51,35 @@ https://www.codementor.io/@engineerapart/getting-started-with-postgresql-on-mac-
 
 ```etl.ipynb``` can be ignored. It was used for the purpose of developing the etl pipeline.
 
+## Database Design
+
+The database was designed with a star schema optimized for queries on song play analysis. 
+
+The design includes a single fact table and 4 dimension tables.
+
+3 of the dimension tables (users, songs, artists) are based around logical entities within Sparkify. The time dimension table was created for the purpose of being able to quickly join the table with songplays and query based on different time units.
+
+Here is a summary of all the tables:
+
+#### **Fact Table**
+
+1. **songplays** - records in log data associated with song plays i.e. records with page `NextSong`
+    - *songplay_id, start_time, user_id, level, **song_id**, **artist_id**, session_id, location, user_agent*
+
+#### **Dimension Tables**
+
+1. **users** - users in the app
+    - *user_id, first_name, last_name, gender, level*
+2. **songs** - songs in music database
+    - *song_id, title, artist_id, year, duration*
+3. **artists** - artists in music database
+    - *artist_id, name, location, latitude, longitude*
+4. **time** - timestamps of records in **songplays** broken down into specific units
+    - *start_time, hour, day, week, month, year, weekday*
+
 ## Example Queries and Expected Results
+
+The following queries were executed using Postico: https://eggerapps.at/postico/
 
 ```SELECT * FROM songplays;```
 
