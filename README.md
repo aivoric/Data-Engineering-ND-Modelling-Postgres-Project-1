@@ -55,25 +55,25 @@ https://www.codementor.io/@engineerapart/getting-started-with-postgresql-on-mac-
 
 ```SELECT * FROM songplays;```
 
-!(sample_results/songplays.png)
+![](sample_results/songplays.png)
 
 ```SELECT * FROM artists;```
 
-!(sample_results/artists.png)
+![](sample_results/artists.png)
 
 ```SELECT * FROM songs;```
 
-!(sample_results/songs.png)
+![](sample_results/songs.png)
 
 ```SELECT * FROM users;```
 
-!(sample_results/users.png)
+![](sample_results/users.png)
 
 ```SELECT * FROM time;```
 
-!(sample_results/time.png)
+![](sample_results/time.png)
 
 ```SELECT * FROM songplays WHERE song_id IS NOT NULL AND artist_id IS NOT NULL;```
 
-!(sample_results/not_null_ids.png)
+![](sample_results/not_null_ids.png)
 
