@@ -49,4 +49,4 @@ https://www.codementor.io/@engineerapart/getting-started-with-postgresql-on-mac-
 
 ```test.py``` uses SQL scripts contained in ```sql_queries.py``` to check that data has been inserted into the database.
 
-```etl.ipyng``` can be ignored. It was used for the purpose of developing the etl pipeline.
+```etl.ipynb``` can be ignored. It was used for the purpose of developing the etl pipeline.
