@@ -48,3 +48,5 @@ https://www.codementor.io/@engineerapart/getting-started-with-postgresql-on-mac-
 ```etl.py``` contains the logic for the data pipeline. It processes files located in the ```/data``` folder and then uses SQL scripts contained in ```sql_queries.py``` to insert data into sparkifydb.
 
 ```test.py``` uses SQL scripts contained in ```sql_queries.py``` to check that data has been inserted into the database.
+
+```etl.ipyng``` can be ignored. It was used for the purpose of developing the etl pipeline.
