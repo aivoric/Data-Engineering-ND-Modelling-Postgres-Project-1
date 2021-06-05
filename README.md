@@ -50,3 +50,30 @@ https://www.codementor.io/@engineerapart/getting-started-with-postgresql-on-mac-
 ```test.py``` uses SQL scripts contained in ```sql_queries.py``` to check that data has been inserted into the database.
 
 ```etl.ipynb``` can be ignored. It was used for the purpose of developing the etl pipeline.
+
+## Example Queries and Expected Results
+
+```SELECT * FROM songplays;```
+
+(sample_results/songplays.png)
+
+```SELECT * FROM artists;```
+
+(sample_results/artists.png)
+
+```SELECT * FROM songs;```
+
+(sample_results/songs.png)
+
+```SELECT * FROM users;```
+
+(sample_results/users.png)
+
+```SELECT * FROM time;```
+
+(sample_results/time.png)
+
+```SELECT * FROM songplays WHERE song_id IS NOT NULL AND artist_id IS NOT NULL;```
+
+(sample_results/not_null_ids.png)
+
