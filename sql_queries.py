@@ -154,6 +154,55 @@ select_not_null_artist_and_song_ids = ("""
     AND song_id IS NOT NULL
 """)
 
+
+# TEMP SONGPLAY TABLE
+# -------------------------------------
+# The following SQL statements are used for simple bulk uploading data via a temp table
+# where no additional merging / manipulation of data is required
+
+create_temp_table = "CREATE TEMP TABLE temp_table AS SELECT * FROM {} WITH NO DATA;"
+copy_to_temp_table = "COPY temp_table FROM '{}' DELIMITER ',' CSV;"
+insert_into_temp_table = "INSERT INTO {} SELECT * FROM temp_table ON CONFLICT DO NOTHING;"
+drop_temp_table = "DROP TABLE temp_table;"
+
+
+# TEMP SONGPLAY TABLE
+# -------------------------------------
+# The following SQL statements are used for processing the songplay log data.
+# A temporary table is created to upload CSV data
+# Data is then upserted into songplay while also getting artist_id and song_id
+
+create_temp_songplay_table = ("""
+CREATE TEMP TABLE IF NOT EXISTS temp_songplay_table (
+    start_time bigint
+    , user_id int
+    , level varchar
+    , session_id int
+    , location varchar
+    , user_agent varchar
+    , song_name varchar
+    , artist_name varchar
+    , song_duration float
+)
+""")
+
+copy_to_temp_songplay_table = "COPY temp_songplay_table FROM '{}' DELIMITER ',' CSV;"
+
+insert_into_temp_songplay_data = """
+    INSERT INTO songplays (start_time, user_id, level, song_id, artist_id, session_id, location, user_agent)
+    SELECT tt.start_time, tt.user_id, tt.level, s.song_id, s.artist_id, tt.session_id, tt.location, tt.user_agent
+    FROM temp_songplay_table tt
+    LEFT JOIN ( 
+        SELECT songs.song_id, songs.title, songs.duration, songs.artist_id, artists.name 
+        FROM songs
+        JOIN artists ON artists.artist_id = songs.artist_id) s
+    ON s.title = tt.song_name AND s.duration = tt.song_duration AND s.name = tt.artist_name 
+    ON CONFLICT DO NOTHING;
+"""
+
+drop_temp_songplay_table = "DROP TABLE temp_songplay_table;"
+
+
 # QUERY LISTS
 
 create_table_queries = [songplay_table_create, user_table_create, song_table_create, artist_table_create, time_table_create]

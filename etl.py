@@ -1,11 +1,36 @@
 import os
+import pathlib
 import glob
 import psycopg2
 import pandas as pd
 from sql_queries import *
 
+def process_bulk_data(table_name, csv_path, cur):
+    """
+    - Create a temporary table
+    - Upload CSV data to it
+    - Insert data into table_name from the temporary table while ensuring primary key limitations
+    - Drop the temporary table
+    """
+    cur.execute(create_temp_table.format(table_name))
+    cur.execute(copy_to_temp_table.format(csv_path))
+    cur.execute(insert_into_temp_table.format(table_name))
+    cur.execute(drop_temp_table)
+    
+def process_bulk_songplay_data(csv_path, cur):
+    """
+    - Create a temporary table
+    - Uploading CSV data to it but without song_id and artist_id
+    - Insert data into the songplay table while also fetching artist_id and song_id directly inside SQL
+    - Drop the temporary table
+    """
+    cur.execute(create_temp_songplay_table)
+    cur.execute(copy_to_temp_songplay_table.format(csv_path))
+    cur.execute(insert_into_temp_songplay_data)
+    cur.execute(drop_temp_songplay_table)
 
-def process_song_file(cur, filepath):
+
+def process_song_file(cur, filepath, conn):
     """
     - Reads a song file which needs to be processed into a pandas dataframe.
     - Extracts the necessary song and artist data from the dataframe.
@@ -23,7 +48,7 @@ def process_song_file(cur, filepath):
     cur.execute(artist_table_insert, artist_data)
 
 
-def process_log_file(cur, filepath):
+def process_log_file(cur, filepath, conn):
     """
     - Reads a log file which needs to be processed into a pandas dataframe.
     - Extracts the necessary time, user, and songplay data from the dataframe.
@@ -32,6 +57,9 @@ def process_log_file(cur, filepath):
     """
     # open log file
     df = pd.read_json(filepath, lines=True)
+    
+    # create path for a temporary CSV which is used for bulk data uploading
+    csv_path = os.path.join(pathlib.Path(__file__).parent.absolute(), "temp_csv.csv")
 
     # filter by NextSong action
     df = df.loc[df['page'] == 'NextSong']
@@ -40,7 +68,7 @@ def process_log_file(cur, filepath):
     timestamp = df['ts']
     df['ts_datetime']= pd.to_datetime(df['ts'], unit='ms')
     
-    # insert time data records
+    # extract each time unit from datetime object
     hour = df['ts_datetime'].dt.hour
     day = df['ts_datetime'].dt.day
     weekofyear = df['ts_datetime'].dt.isocalendar().week
@@ -48,35 +76,26 @@ def process_log_file(cur, filepath):
     year = df['ts_datetime'].dt.year
     weekday = df['ts_datetime'].dt.dayofweek
 
+    # save time data into csv and then run process_bulk_data to upload it to the database
     column_labels = ["timestamp", "hour", "day", "weekofyear", "month", "year", "weekday"]
+    time_df = pd.DataFrame(
+        list(zip(timestamp, hour, day, weekofyear, month, year, weekday)), 
+        columns = column_labels
+        )
+    time_df.to_csv(csv_path, index=False, header=False)
+    process_bulk_data("time", csv_path, cur)
 
-    time_df = pd.DataFrame(list(zip(timestamp, hour, day, weekofyear, month, year, weekday)), columns = column_labels)
-
-    for i, row in time_df.iterrows():
-        cur.execute(time_table_insert, list(row))
-
-    # load user table
-    user_df = df[["userId", "firstName","lastName", "gender", "level"]]
-
-    # insert user records
-    for i, row in user_df.iterrows():
-        cur.execute(user_table_insert, row)
-
-    # insert songplay records
-    for index, row in df.iterrows():
-        
-        # get songid and artistid from song and artist tables
-        cur.execute(song_select, (row.song, row.artist, row.length))
-        results = cur.fetchone()
-        
-        if results:
-            songid, artistid = results
-        else:
-            songid, artistid = None, None
-
-        # insert songplay record
-        songplay_data = (row.ts, row.userId, row.level, songid, artistid, row.sessionId, row.location, row.userAgent)
-        cur.execute(songplay_table_insert, songplay_data)
+    # extract user data and then run process_bulk_data to upload it to the database
+    user_df = df[["userId", "firstName","lastName", "gender", "level"]]    
+    user_df.to_csv(csv_path, index=False, header=False)
+    process_bulk_data("users", csv_path, cur)
+    
+    # extract songplay data and then run process_bulk_songplay_data
+    # note: songplay data has a special function because it requires custom SQL
+    # in order to merge additional data into it (artist_id and song_id)
+    songplay_df = df[["ts", "userId","level", "sessionId", "location", "userAgent", "song", "artist", "length"]]
+    songplay_df.to_csv(csv_path, index=False, header=False)
+    process_bulk_songplay_data(csv_path, cur)
 
 
 def process_data(cur, conn, filepath, func):
@@ -99,7 +118,7 @@ def process_data(cur, conn, filepath, func):
 
     # iterate over files and process
     for i, datafile in enumerate(all_files, 1):
-        func(cur, datafile)
+        func(cur, datafile, conn)
         conn.commit()
         print('{}/{} files processed.'.format(i, num_files))
 

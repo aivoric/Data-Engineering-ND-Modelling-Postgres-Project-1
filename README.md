@@ -77,6 +77,32 @@ Here is a summary of all the tables:
 4. **time** - timestamps of records in **songplays** broken down into specific units
     - *start_time, hour, day, week, month, year, weekday*
 
+## A Note on Bulk Data Upload
+
+In the latest version ```etl.py``` has been refactored to upload the log data in bulk for:
+* time data
+* user data
+* songplay data
+
+This has significantly increased the upload speed. 
+
+However, there were a few technical challenges:
+1. The Postgres COPY statement does not handle duplicate primary keys. The workaround for that is to use a temporary table. A good solution was provided here:
+https://stackoverflow.com/questions/13947327/to-ignore-duplicate-keys-during-copy-from-in-postgresql
+
+2. The fastest way to COPY a dataframe in the database is actually by first converting it into a CSV, and then running the COPY statement to read data from the CSV. A good summary of this is provided here: 
+https://towardsdatascience.com/upload-your-pandas-dataframe-to-your-database-10x-faster-eb6dc6609ddf
+
+The above two points can be seen in the following SQL pattern which can also be found in ```sql_queries.py```:
+
+```
+"CREATE TEMP TABLE temp_table AS SELECT * FROM main_table WITH NO DATA;"
+"COPY temp_table FROM 'path/to/csv' DELIMITER ',' CSV;"
+"INSERT INTO main_table SELECT * FROM temp_table ON CONFLICT DO NOTHING;"
+"DROP TABLE temp_table;"
+```
+
+
 ## Example Queries and Expected Results
 
 The following queries were executed using Postico: https://eggerapps.at/postico/
