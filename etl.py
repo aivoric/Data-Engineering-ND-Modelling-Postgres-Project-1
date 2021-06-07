@@ -47,7 +47,6 @@ def process_song_file(cur, filepath, conn):
     artist_data = df[['artist_id','artist_name','artist_location','artist_latitude','artist_longitude']].to_numpy().flatten().tolist()
     cur.execute(artist_table_insert, artist_data)
 
-
 def process_log_file(cur, filepath, conn):
     """
     - Reads a log file which needs to be processed into a pandas dataframe.
@@ -84,11 +83,13 @@ def process_log_file(cur, filepath, conn):
         )
     time_df.to_csv(csv_path, index=False, header=False)
     process_bulk_data("time", csv_path, cur)
+    os.remove(csv_path)
 
     # extract user data and then run process_bulk_data to upload it to the database
     user_df = df[["userId", "firstName","lastName", "gender", "level"]]    
     user_df.to_csv(csv_path, index=False, header=False)
     process_bulk_data("users", csv_path, cur)
+    os.remove(csv_path)
     
     # extract songplay data and then run process_bulk_songplay_data
     # note: songplay data has a special function because it requires custom SQL
@@ -96,7 +97,7 @@ def process_log_file(cur, filepath, conn):
     songplay_df = df[["ts", "userId","level", "sessionId", "location", "userAgent", "song", "artist", "length"]]
     songplay_df.to_csv(csv_path, index=False, header=False)
     process_bulk_songplay_data(csv_path, cur)
-
+    os.remove(csv_path)
 
 def process_data(cur, conn, filepath, func):
     """

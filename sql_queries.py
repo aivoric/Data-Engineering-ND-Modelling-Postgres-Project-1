@@ -11,53 +11,53 @@ time_table_drop = "DROP TABLE IF EXISTS time"
 songplay_table_create = ("""
 CREATE TABLE IF NOT EXISTS songplays (
     songplay_id SERIAL PRIMARY KEY
-    , start_time bigint
-    , user_id int
-    , level varchar
+    , start_time bigint NOT NULL
+    , user_id int NOT NULL
+    , level varchar NOT NULL
     , song_id varchar
     , artist_id varchar
-    , session_id int
-    , location varchar
-    , user_agent varchar
+    , session_id int NOT NULL
+    , location varchar NOT NULL
+    , user_agent varchar NOT NULL
 )
 """)
 
 user_table_create = ("""
 CREATE TABLE IF NOT EXISTS users (
     user_id int PRIMARY KEY
-    , first_name varchar
-    , last_name varchar
-    , gender varchar(1)
-    , level varchar(10)
+    , first_name varchar NOT NULL
+    , last_name varchar NOT NULL
+    , gender varchar(1) NOT NULL
+    , level varchar(10) NOT NULL
 )
 """)
 
 song_table_create = ("""
 CREATE TABLE IF NOT EXISTS songs (
     song_id varchar PRIMARY KEY
-    , title varchar
-    , artist_id varchar
-    , year smallint
-    , duration float
+    , title varchar NOT NULL
+    , artist_id varchar NOT NULL
+    , year smallint NOT NULL
+    , duration float NOT NULL
 )
 """)
 
 time_table_create = ("""
 CREATE TABLE IF NOT EXISTS time (
-    start_time bigint
-    , hour smallint
-    , day smallint
-    , week smallint
-    , month smallint
-    , year smallint
-    , weekday smallint
+    start_time bigint PRIMARY KEY
+    , hour smallint NOT NULL
+    , day smallint NOT NULL
+    , week smallint NOT NULL
+    , month smallint NOT NULL
+    , year smallint NOT NULL
+    , weekday smallint NOT NULL
 )
 """)
 
 artist_table_create = ("""
 CREATE TABLE IF NOT EXISTS artists (
     artist_id varchar PRIMARY KEY
-    , name varchar
+    , name varchar NOT NULL
     , location varchar
     , latitude float
     , longitude float
@@ -75,7 +75,12 @@ INSERT INTO users (
     , level
 )
 VALUES (%s,%s,%s,%s,%s)
-ON CONFLICT DO NOTHING
+ON CONFLICT (user_id)
+DO UPDATE SET 
+    first_name  = EXCLUDED.first_name
+    , last_name = EXCLUDED.last_name
+    , gender = EXCLUDED.gender
+    , level = EXCLUDED.level
 """)
 
 song_table_insert = ("""
@@ -87,7 +92,12 @@ INSERT INTO songs (
     , duration
 )
 VALUES (%s,%s,%s,%s,%s)
-ON CONFLICT DO NOTHING
+ON CONFLICT (song_id)
+DO UPDATE SET 
+    title  = EXCLUDED.title
+    , artist_id = EXCLUDED.artist_id
+    , year = EXCLUDED.year
+    , duration = EXCLUDED.duration
 """)
 
 artist_table_insert = ("""
@@ -99,7 +109,12 @@ INSERT INTO artists (
     , longitude
 )
 VALUES (%s,%s,%s,%s,%s)
-ON CONFLICT DO NOTHING
+ON CONFLICT (artist_id)
+DO UPDATE SET 
+    name  = EXCLUDED.name
+    , location = EXCLUDED.location
+    , latitude = EXCLUDED.latitude
+    , longitude = EXCLUDED.longitude
 """)
 
 time_table_insert = ("""
@@ -113,45 +128,7 @@ INSERT INTO time (
     , weekday
 )
 VALUES (%s,%s,%s,%s,%s,%s,%s)
-""")
-
-songplay_table_insert = ("""
-INSERT INTO songplays (
-    start_time
-    , user_id
-    , level
-    , song_id
-    , artist_id
-    , session_id
-    , location
-    , user_agent
-)
-VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
-""")
-
-# FIND SONGS
-
-song_select = ("""
-    SELECT
-        s.song_id
-        , s.artist_id
-    FROM songs s
-    JOIN artists a ON a.artist_id = s.artist_id
-    WHERE s.title = %s
-    AND a.name = %s
-    AND s.duration = %s
-""")
-
-# TESTS
-
-select_test_records = ("""
-    SELECT * FROM {} LIMIT {}
-""")
-
-select_not_null_artist_and_song_ids = ("""
-    SELECT * FROM songplays 
-    WHERE artist_id IS NOT NULL
-    AND song_id IS NOT NULL
+ON CONFLICT DO NOTHING
 """)
 
 
@@ -174,21 +151,21 @@ drop_temp_table = "DROP TABLE temp_table;"
 
 create_temp_songplay_table = ("""
 CREATE TEMP TABLE IF NOT EXISTS temp_songplay_table (
-    start_time bigint
-    , user_id int
-    , level varchar
-    , session_id int
-    , location varchar
-    , user_agent varchar
-    , song_name varchar
-    , artist_name varchar
-    , song_duration float
+    start_time bigint NOT NULL
+    , user_id int NOT NULL
+    , level varchar NOT NULL
+    , session_id int NOT NULL
+    , location varchar NOT NULL
+    , user_agent varchar NOT NULL
+    , song_name varchar NOT NULL
+    , artist_name varchar NOT NULL
+    , song_duration float NOT NULL
 )
 """)
 
 copy_to_temp_songplay_table = "COPY temp_songplay_table FROM '{}' DELIMITER ',' CSV;"
 
-insert_into_temp_songplay_data = """
+insert_into_temp_songplay_data = ("""
     INSERT INTO songplays (start_time, user_id, level, song_id, artist_id, session_id, location, user_agent)
     SELECT tt.start_time, tt.user_id, tt.level, s.song_id, s.artist_id, tt.session_id, tt.location, tt.user_agent
     FROM temp_songplay_table tt
@@ -197,10 +174,23 @@ insert_into_temp_songplay_data = """
         FROM songs
         JOIN artists ON artists.artist_id = songs.artist_id) s
     ON s.title = tt.song_name AND s.duration = tt.song_duration AND s.name = tt.artist_name 
-    ON CONFLICT DO NOTHING;
-"""
+    ON CONFLICT DO NOTHING
+""")
 
 drop_temp_songplay_table = "DROP TABLE temp_songplay_table;"
+
+
+# TESTS
+
+select_test_records = ("""
+    SELECT * FROM {} LIMIT {}
+""")
+
+select_not_null_artist_and_song_ids = ("""
+    SELECT * FROM songplays 
+    WHERE artist_id IS NOT NULL
+    AND song_id IS NOT NULL
+""")
 
 
 # QUERY LISTS
